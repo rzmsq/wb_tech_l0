@@ -3,10 +3,11 @@ module l0_test_self
 go 1.24
 
 require (
-	github.com/google/uuid v1.6.0
+	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/segmentio/kafka-go v0.4.48
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -19,9 +20,7 @@ require (
 	github.com/jackc/puddle v1.3.0 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
-	github.com/yuin/goldmark v1.4.13 // indirect
-	golang.org/x/crypto v0.37.0 // indirect
-	golang.org/x/mod v0.26.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
-	golang.org/x/tools v0.35.0 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 )

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"l0_test_self/internal/cache"
+	"l0_test_self/internal/config"
 	"log"
 	"net/http"
 	"time"
@@ -17,17 +18,15 @@ import (
 func main() {
 	ctx := context.Background()
 
-	// Initialize the database connection
-	dbCfg := postgres.DBConfig{
-		Host:     "localhost",
-		Port:     "5432",
-		User:     "service_u",
-		Password: "123",
-		DBName:   "service_db",
-		SSLMode:  "disable",
+	// Load configuration
+	cfg, err := config.Load("../../config.yaml")
+	if err != nil {
+		log.Fatalf("Error loading config: %v", err)
 	}
 
-	pool, err := postgres.NewClient(ctx, dbCfg, 5)
+	// Initialize database connection using config
+	dbCfg := cfg.Database.ToPostgresConfig()
+	pool, err := postgres.NewClient(ctx, dbCfg, cfg.Database.MaxConnections)
 	if err != nil {
 		fmt.Printf("Error creating database pool: %v\n", err)
 	}
@@ -46,13 +45,8 @@ func main() {
 	orderCache.LoadFromSlice(existingOrders)
 	log.Printf("Order cache initialized")
 
-	// Initialize the Kafka connection
-	kafkaCfg := kafka.KafkaConfig{
-		Brokers: []string{"localhost:9092"},
-		Topic:   "orders",
-		GroupID: "order_processor",
-	}
-	reader := kafka.NewKafkaReader(kafkaCfg)
+	// Initialize Kafka reader using config
+	reader := kafka.NewKafkaReader(cfg.Kafka.ToKafkaConfig())
 	defer reader.Close()
 
 	log.Println("Reader opened successfully")
@@ -63,26 +57,23 @@ func main() {
 			msg, err := reader.ReadMessage(ctx)
 			if err != nil {
 				log.Printf("Error reading message: %v\n", err)
-				time.Sleep(1 * time.Second) // Wait before retrying
+				time.Sleep(1 * time.Second)
 				continue
 			}
 			log.Printf("Received message: %s\n", string(msg.Value))
 
-			// parse the message
 			var order orders.Order
 			if err := json.Unmarshal(msg.Value, &order); err != nil {
 				log.Printf("Error parsing order data: %v\n", err)
 				continue
 			}
 
-			// Insert the order into the database
 			if err := postgres.InsertOrder(ctx, pool, &order); err != nil {
 				log.Printf("Error inserting order into database: %v\n", err)
 				continue
 			}
 			log.Printf("Order %s inserted successfully\n", order.OrderUid)
 
-			// add the order to the cache
 			orderCache.Set(order)
 			log.Printf("Order %s cached successfully\n", order.OrderUid)
 		}
@@ -101,7 +92,6 @@ func main() {
 
 		order, found := orderCache.Get(orderID)
 		if !found {
-			// If not in cache, try to get from DB
 			log.Printf("Order %s not found in cache, checking DB", orderID)
 			http.Error(w, "Order not found", http.StatusNotFound)
 			return
@@ -111,8 +101,8 @@ func main() {
 		json.NewEncoder(w).Encode(order)
 	})
 
-	log.Println("Starting server on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	log.Printf("Starting server on %s", cfg.Server.Port)
+	if err := http.ListenAndServe(cfg.Server.Port, nil); err != nil {
 		log.Fatalf("could not start server: %v\n", err)
 	}
 }

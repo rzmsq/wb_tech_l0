@@ -3,13 +3,14 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"l0_test_self/models/orders"
+	"l0_test_self/pkg/utils"
+	"time"
+
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/jackc/pgx/v4/pgxpool"
-	"l0_test_self/models/orders"
-	"l0_test_self/pkg/utils"
-	"time"
 )
 
 // DBConfig holds the configuration for connecting to a PostgreSQL database.

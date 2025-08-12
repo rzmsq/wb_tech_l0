@@ -1,0 +1,25 @@
+database:
+  host: "localhost"
+  port: "5432"
+  user: "service_u"
+  password: "123"
+  db_name: "service_db"
+  ssl_mode: "disable"
+  max_connections: 5
+
+kafka:
+  brokers: ["localhost:9092"]
+  topic: "orders"
+  group_id: "order_processor"
+  reader:
+    min_bytes: 10240
+    max_bytes: 10485760
+    read_batch_timeout: "1s"
+    commit_interval: "1s"
+  writer:
+    write_timeout: "10s"
+    read_timeout: "10s"
+    balancer: "least_bytes"
+
+server:
+  port: ":8080"
