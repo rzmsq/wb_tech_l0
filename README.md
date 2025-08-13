@@ -23,7 +23,7 @@
    docker-compose up --build
    ```
 4. Запустите сервисы:
-   - Producer: `go run cmd/producer/main.go`
+   - Producer: `go run cmd/producer/main.go cmd/producer/test_data_generator.go`
    - Server: `go run cmd/server/main.go`
 
 ## Тестирование
