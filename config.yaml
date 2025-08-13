@@ -22,6 +22,15 @@ kafka:
     read_timeout: "10s"
     balancer: "least_bytes"
 
+test:
+  kafka:
+    brokers: ["localhost:9092"]
+    topic: "orders"
+    integration_group_id: "test_producer"
+    multiple_group_id: "test_multiple_producer"
+    benchmark_group_id: "benchmark_producer"
+    benchmark_topic: "benchmark_orders"
+
 cache:
   shard_count: 32
   max_items: 100000

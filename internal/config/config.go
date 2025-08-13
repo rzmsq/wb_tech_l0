@@ -25,6 +25,22 @@ type Config struct {
 	Kafka    KafkaConfig    `yaml:"kafka"`
 	Server   ServerConfig   `yaml:"server"`
 	Cache    CacheConfig    `yaml:"cache"`
+	Test     TestConfig     `yaml:"test"`
+}
+
+// TestConfig содержит настройки для тестов
+type TestConfig struct {
+	Kafka TestKafkaConfig `yaml:"kafka"`
+}
+
+// TestKafkaConfig содержит настройки Kafka для тестов
+type TestKafkaConfig struct {
+	Brokers            []string `yaml:"brokers"`
+	Topic              string   `yaml:"topic"`
+	IntegrationGroupID string   `yaml:"integration_group_id"`
+	MultipleGroupID    string   `yaml:"multiple_group_id"`
+	BenchmarkGroupID   string   `yaml:"benchmark_group_id"`
+	BenchmarkTopic     string   `yaml:"benchmark_topic"`
 }
 
 // DatabaseConfig Config содержит настройки приложения, включая параметры подключения к базе данных PostgreSQL, конфигурацию Kafka и настройки сервера.
