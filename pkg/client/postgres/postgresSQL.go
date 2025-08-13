@@ -1,3 +1,4 @@
+// Package postgres предоставляет функции для работы с базой данных PostgreSQL, включая подключение, выполнение SQL команд и транзакций.
 package postgres
 
 import (
@@ -13,7 +14,7 @@ import (
 	_ "github.com/jackc/pgx/v4/pgxpool"
 )
 
-// DBConfig holds the configuration for connecting to a PostgreSQL database.
+// DBConfig хранит параметры подключения к базе данных PostgreSQL.
 type DBConfig struct {
 	Host     string
 	Port     string
@@ -23,7 +24,7 @@ type DBConfig struct {
 	SSLMode  string
 }
 
-// Client is an interface that defines methods for interacting with a PostgreSQL database.
+// Client это интерфейс для работы с PostgreSQL клиентом, который позволяет выполнять SQL команды и транзакции.
 type Client interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 	Query(ctx context.Context, sql string, arguments ...interface{}) (pgx.Rows, error)
@@ -31,7 +32,7 @@ type Client interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
-// NewClient creates a new PostgreSQL client with the provided configuration and connection retry logic.
+// NewClient создает новый клиент для подключения к базе данных PostgreSQL с использованием пула соединений.
 func NewClient(ctx context.Context, config DBConfig, maxAttempts int) (pool *pgxpool.Pool, err error) {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		config.User, config.Password, config.Host, config.Port, config.DBName, config.SSLMode)
@@ -54,6 +55,7 @@ func NewClient(ctx context.Context, config DBConfig, maxAttempts int) (pool *pgx
 	return pool, nil
 }
 
+// InsertOrder вставляет новый заказ в базу данных PostgreSQL, включая связанные данные о доставке, оплате и товарах.
 func InsertOrder(ctx context.Context, pool *pgxpool.Pool, order *orders.Order) error {
 	tx, err := pool.Begin(ctx)
 	if err != nil {
@@ -61,7 +63,7 @@ func InsertOrder(ctx context.Context, pool *pgxpool.Pool, order *orders.Order) e
 	}
 	defer tx.Rollback(ctx)
 
-	// Insert into orders table
+	// вставляем в orders таблицу
 	orderSQL := `INSERT INTO orders (order_uid, track_number, entry, locale, internal_signature, customer_id, delivery_service, shardkey, sm_id, date_created, oof_shard)
               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 	_, err = tx.Exec(ctx, orderSQL, order.OrderUid, order.TrackNumber, order.Entry, order.Locale, order.InternalSignature, order.CustomerId, order.DeliveryService, order.Shardkey, order.SmId, order.DateCreated, order.OofShard)
@@ -69,7 +71,7 @@ func InsertOrder(ctx context.Context, pool *pgxpool.Pool, order *orders.Order) e
 		return fmt.Errorf("failed to insert into orders: %w", err)
 	}
 
-	// Insert into delivery table
+	// вставляем в delivery таблицу
 	deliverySQL := `INSERT INTO delivery (order_uid, name, phone, zip, city, address, region, email)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	_, err = tx.Exec(ctx, deliverySQL, order.OrderUid, order.Delivery.Name, order.Delivery.Phone, order.Delivery.Zip, order.Delivery.City, order.Delivery.Address, order.Delivery.Region, order.Delivery.Email)
@@ -77,9 +79,7 @@ func InsertOrder(ctx context.Context, pool *pgxpool.Pool, order *orders.Order) e
 		return fmt.Errorf("failed to insert into delivery: %w", err)
 	}
 
-	// Insert into payment table
-	// NOTE: The payment table schema should have an order_uid foreign key.
-	// Assuming transaction_id is the order_uid for this relationship.
+	// вставляем в payment таблицу
 	paymentSQL := `INSERT INTO payment (transaction_id, request_id, currency, provider, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 	_, err = tx.Exec(ctx, paymentSQL, order.Payment.Transaction, order.Payment.RequestId, order.Payment.Currency, order.Payment.Provider, order.Payment.Amount, order.Payment.PaymentDt, order.Payment.Bank, order.Payment.DeliveryCost, order.Payment.GoodsTotal, order.Payment.CustomFee)
@@ -87,7 +87,7 @@ func InsertOrder(ctx context.Context, pool *pgxpool.Pool, order *orders.Order) e
 		return fmt.Errorf("failed to insert into payment: %w", err)
 	}
 
-	// Insert into items table
+	// вставляем в items таблицу
 	itemSQL := `INSERT INTO items (chrt_id, order_uid, track_number, price, rid, name, sale, size, total_price, nm_id, brand, status)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
 	for _, item := range order.Items {
@@ -100,9 +100,9 @@ func InsertOrder(ctx context.Context, pool *pgxpool.Pool, order *orders.Order) e
 	return tx.Commit(ctx)
 }
 
-// GetAllOrders retrieves all orders from the database to populate the cache.
+// GetAllOrders извлекает все заказы из базы данных PostgreSQL, включая связанные данные о доставке, оплате и товарах.
 func GetAllOrders(ctx context.Context, pool *pgxpool.Pool) ([]orders.Order, error) {
-	// 1. Get all base orders
+	// 1. Получаем все заказы
 	orderSQL := `SELECT order_uid, track_number, entry, locale, internal_signature, customer_id, delivery_service, shardkey, sm_id, date_created, oof_shard FROM orders`
 	rows, err := pool.Query(ctx, orderSQL)
 	if err != nil {
@@ -124,7 +124,7 @@ func GetAllOrders(ctx context.Context, pool *pgxpool.Pool) ([]orders.Order, erro
 		return nil, fmt.Errorf("error iterating order rows: %w", rows.Err())
 	}
 
-	// 2. Get all deliveries and map them
+	// 2. получаем все доставки и мапим их
 	deliverySQL := `SELECT order_uid, name, phone, zip, city, address, region, email FROM delivery`
 	deliveryRows, err := pool.Query(ctx, deliverySQL)
 	if err != nil {
@@ -147,8 +147,7 @@ func GetAllOrders(ctx context.Context, pool *pgxpool.Pool) ([]orders.Order, erro
 		return nil, fmt.Errorf("error iterating delivery rows: %w", deliveryRows.Err())
 	}
 
-	// 3. Get all payments and map them
-	// Assuming 'transaction_id' in the payment table corresponds to 'order_uid'
+	// 3. получаем все платежи и мапим их
 	paymentSQL := `SELECT transaction_id, request_id, currency, provider, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee FROM payment`
 	paymentRows, err := pool.Query(ctx, paymentSQL)
 	if err != nil {
@@ -171,7 +170,7 @@ func GetAllOrders(ctx context.Context, pool *pgxpool.Pool) ([]orders.Order, erro
 		return nil, fmt.Errorf("error iterating payment rows: %w", paymentRows.Err())
 	}
 
-	// 4. Get all items and map them
+	// 4. получаем все товары и мапим их
 	itemSQL := `SELECT chrt_id, order_uid, track_number, price, rid, name, sale, "size", total_price, nm_id, brand, status FROM items`
 	itemRows, err := pool.Query(ctx, itemSQL)
 	if err != nil {
@@ -194,7 +193,7 @@ func GetAllOrders(ctx context.Context, pool *pgxpool.Pool) ([]orders.Order, erro
 		return nil, fmt.Errorf("error iterating item rows: %w", itemRows.Err())
 	}
 
-	// 5. Convert map to slice
+	// 5. Преобразуем map в срез
 	var orderList []orders.Order
 	for _, order := range orderMap {
 		orderList = append(orderList, *order)

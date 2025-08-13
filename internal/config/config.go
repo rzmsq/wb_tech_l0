@@ -1,3 +1,4 @@
+// Package config содержит структуры и функции для загрузки конфигурации приложения из файла YAML.
 package config
 
 import (
@@ -10,12 +11,23 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// CacheConfig содержит настройки кэша
+type CacheConfig struct {
+	ShardCount      int           `yaml:"shard_count"`
+	MaxItems        int           `yaml:"max_items"`
+	TTL             time.Duration `yaml:"ttl"`
+	CleanupInterval time.Duration `yaml:"cleanup_interval"`
+}
+
+// Config содержит настройки приложения, включая параметры подключения к базе данных PostgreSQL, конфигурацию Kafka и настройки сервера.
 type Config struct {
 	Database DatabaseConfig `yaml:"database"`
 	Kafka    KafkaConfig    `yaml:"kafka"`
 	Server   ServerConfig   `yaml:"server"`
+	Cache    CacheConfig    `yaml:"cache"`
 }
 
+// DatabaseConfig Config содержит настройки приложения, включая параметры подключения к базе данных PostgreSQL, конфигурацию Kafka и настройки сервера.
 type DatabaseConfig struct {
 	Host           string `yaml:"host"`
 	Port           string `yaml:"port"`
@@ -26,6 +38,7 @@ type DatabaseConfig struct {
 	MaxConnections int    `yaml:"max_connections"`
 }
 
+// KafkaConfig DatabaseConfig содержит настройки для подключения к базе данных PostgreSQL, такие как хост, порт, пользователь, пароль, имя базы данных и режим SSL.
 type KafkaConfig struct {
 	Brokers []string     `yaml:"brokers"`
 	Topic   string       `yaml:"topic"`
@@ -34,6 +47,7 @@ type KafkaConfig struct {
 	Writer  WriterConfig `yaml:"writer"`
 }
 
+// ReaderConfig содержит настройки для Kafka Reader, такие как минимальный и максимальный размер сообщений, таймауты и интервал коммита.
 type ReaderConfig struct {
 	MinBytes         int           `yaml:"min_bytes"`
 	MaxBytes         int           `yaml:"max_bytes"`
@@ -41,16 +55,20 @@ type ReaderConfig struct {
 	CommitInterval   time.Duration `yaml:"commit_interval"`
 }
 
+// WriterConfig содержит настройки для Kafka Writer, такие как таймауты и балансировщик нагрузки.
 type WriterConfig struct {
 	WriteTimeout time.Duration `yaml:"write_timeout"`
 	ReadTimeout  time.Duration `yaml:"read_timeout"`
 	Balancer     string        `yaml:"balancer"`
 }
 
+// ServerConfig содержит настройки сервера, такие как порт.
 type ServerConfig struct {
-	Port string `yaml:"port"`
+	Port            string        `yaml:"port"`
+	ShutdownTimeout time.Duration `yaml:"shutdown_timeout"`
 }
 
+// Load загружает конфигурацию из файла YAML по указанному пути.
 func Load(configPath string) (*Config, error) {
 	data, err := os.ReadFile(configPath)
 	if err != nil {
@@ -65,6 +83,7 @@ func Load(configPath string) (*Config, error) {
 	return &cfg, nil
 }
 
+// ToPostgresConfig преобразует DatabaseConfig в postgres.DBConfig.
 func (c *DatabaseConfig) ToPostgresConfig() postgres.DBConfig {
 	return postgres.DBConfig{
 		Host:     c.Host,
@@ -76,6 +95,7 @@ func (c *DatabaseConfig) ToPostgresConfig() postgres.DBConfig {
 	}
 }
 
+// ToKafkaConfig NewKafkaReader создает новый Kafka Reader с использованием конфигурации из KafkaConfig.
 func (c *KafkaConfig) ToKafkaConfig() kafka.Config {
 	return kafka.Config{
 		Brokers: c.Brokers,

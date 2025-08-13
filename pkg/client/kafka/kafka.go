@@ -1,3 +1,4 @@
+// Package kafka для работы с Kafka, включая конфигурацию и создание читателей и писателей.
 package kafka
 
 import (
@@ -6,6 +7,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+// Config содержит настройки для подключения к Kafka, включая брокеры, топик, группу и конфигурации читателя и писателя.
 type Config struct {
 	Brokers []string     `yaml:"brokers"`
 	Topic   string       `yaml:"topic"`
@@ -14,6 +16,7 @@ type Config struct {
 	Writer  WriterConfig `yaml:"writer"`
 }
 
+// ReaderConfig содержит настройки для Kafka Reader, такие, как минимальный и максимальный размер сообщений, таймауты и интервал коммита.
 type ReaderConfig struct {
 	MinBytes         int           `yaml:"min_bytes"`
 	MaxBytes         int           `yaml:"max_bytes"`
@@ -21,12 +24,14 @@ type ReaderConfig struct {
 	CommitInterval   time.Duration `yaml:"commit_interval"`
 }
 
+// WriterConfig содержит настройки для Kafka Writer, такие, как таймауты и балансировщик нагрузки.
 type WriterConfig struct {
 	WriteTimeout time.Duration `yaml:"write_timeout"`
 	ReadTimeout  time.Duration `yaml:"read_timeout"`
 	Balancer     string        `yaml:"balancer"`
 }
 
+// NewKafkaReader создает новый Kafka Reader с использованием конфигурации из Config.
 func NewKafkaReader(cfg Config) *kafka.Reader {
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:          cfg.Brokers,
@@ -40,6 +45,7 @@ func NewKafkaReader(cfg Config) *kafka.Reader {
 	return reader
 }
 
+// NewWriter создает новый Kafka Writer с использованием конфигурации из Config.
 func NewWriter(cfg Config) *kafka.Writer {
 	var balancer kafka.Balancer
 	switch cfg.Writer.Balancer {

@@ -14,6 +14,7 @@ kafka:
   reader:
     min_bytes: 10240
     max_bytes: 10485760
+    read_retry_delay: "1s"
     read_batch_timeout: "1s"
     commit_interval: "1s"
   writer:
@@ -21,5 +22,12 @@ kafka:
     read_timeout: "10s"
     balancer: "least_bytes"
 
+cache:
+  shard_count: 32
+  max_items: 100000
+  ttl: "10m"
+  cleanup_interval: "1m"
+
 server:
   port: ":8080"
+  shutdown_timeout: "10s"
