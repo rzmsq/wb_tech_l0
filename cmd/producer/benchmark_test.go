@@ -1,3 +1,4 @@
+// Описание: Benchmark для создания Kafka Writer
 package main
 
 import (
@@ -7,6 +8,7 @@ import (
 	kafkaClient "l0_test_self/pkg/client/kafka"
 )
 
+// BenchmarkWriterCreation - бенчмарк для измерения времени создания Kafka Writer
 func BenchmarkWriterCreation(b *testing.B) {
 	cfg, err := config.Load("../../config.yaml")
 	if err != nil {

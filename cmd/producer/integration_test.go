@@ -1,3 +1,4 @@
+// Описание: Интеграционные тесты для Kafka Producer
 package main
 
 import (
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// GenerateTestOrderJSON - функция для генерации тестового заказа в формате JSON
 func TestKafkaIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
@@ -51,6 +53,7 @@ func TestKafkaIntegration(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// TestGenerateTestOrderJSON - тест для проверки генерации тестового заказа в формате JSON
 func TestMultipleMessagesSending(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")

@@ -1,3 +1,6 @@
+// File: cmd/producer/main_test.go
+// Описание: Тесты для продюсера Kafka, включая генерацию тестовых
+// заказов, конфигурацию Kafka и отправку сообщений
 package main
 
 import (
