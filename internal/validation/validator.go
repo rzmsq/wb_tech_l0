@@ -8,7 +8,6 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// Package validation обеспечивает валидацию структур и идентификаторов заказов.
 var v = validator.New()
 
 // ValidateOrder проверяет, соответствует ли структура заказа правилам валидации.
