@@ -94,7 +94,7 @@ func run() error {
 
 	// Запускаем HTTP сервер
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir("./web")))
+	mux.Handle("/", http.FileServer(http.Dir("../../web")))
 	mux.HandleFunc("/order", makeOrderHandler(cc, logger))
 
 	server := &http.Server{

@@ -30,8 +30,12 @@ func ValidateOrder(o interface{}) error {
 
 // ValidateOrderID проверяет, соответствует ли идентификатор заказа допустимым символам (буквы и цифры).
 func ValidateOrderID(id string) bool {
+	if len(id) == 0 {
+		return false
+	}
+
 	for _, r := range id {
-		if !(r >= '0' && r <= '9' || r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z') {
+		if !(r >= '0' && r <= '9' || r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' || r == '-') {
 			return false
 		}
 	}
